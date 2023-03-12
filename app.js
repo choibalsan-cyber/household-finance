@@ -6,9 +6,36 @@ var uiController = (function () {
     addButton: '.add__btn',
     incomeList: '.income__list',
     expenseList: '.expenses__list',
+    budgetLabel: '.budget__value',
+    totalIncLabel: '.budget__income--value',
+    totalExpLabel: '.budget__expenses--value',
+    totalPercentageLabel: '.budget__expenses--percentage',
   };
 
   return {
+    showBudget: function (budget) {
+      budget.budget === 0
+        ? (document.querySelector(DOMStrings.budgetLabel).textContent =
+            budget.budget)
+        : (document.querySelector(DOMStrings.budgetLabel).textContent =
+            '+' + budget.budget);
+      budget.totalInc === 0
+        ? (document.querySelector(DOMStrings.totalIncLabel).textContent =
+            budget.totalInc)
+        : (document.querySelector(DOMStrings.totalIncLabel).textContent =
+            '+' + budget.totalInc);
+      budget.totalExp === 0
+        ? (document.querySelector(DOMStrings.totalExpLabel).textContent =
+            budget.totalExp)
+        : (document.querySelector(DOMStrings.totalExpLabel).textContent =
+            '-' + budget.totalExp);
+      budget.percentage === 0
+        ? (document.querySelector(DOMStrings.totalPercentageLabel).textContent =
+            budget.percentage)
+        : (document.querySelector(DOMStrings.totalPercentageLabel).textContent =
+            budget.percentage + '%');
+    },
+
     getInput: function () {
       return {
         type: document.querySelector(DOMStrings.inputType).value,
@@ -154,7 +181,7 @@ var appController = (function (uiCtrl, fnCtrl) {
       var budget = fnController.getBudget();
 
       // 6. Дэлгэцэнд үзүүлнэ
-      console.log(budget);
+      uiController.showBudget(budget);
     }
   };
 
@@ -178,6 +205,12 @@ var appController = (function (uiCtrl, fnCtrl) {
   return {
     init: function () {
       console.log('Started');
+      uiController.showBudget({
+        budget: 0,
+        totalInc: 0,
+        totalExp: 0,
+        percentage: 0,
+      });
       setupEventListeners();
     },
   };
