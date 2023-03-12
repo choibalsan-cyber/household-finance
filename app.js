@@ -10,9 +10,15 @@ var uiController = (function () {
     totalIncLabel: '.budget__income--value',
     totalExpLabel: '.budget__expenses--value',
     totalPercentageLabel: '.budget__expenses--percentage',
+    containerDiv: '.container',
   };
 
   return {
+    deleteElement: function (id) {
+      var el = document.getElementById(id);
+      el.parentNode.removeChild(el);
+    },
+
     showBudget: function (budget) {
       budget.budget === 0
         ? (document.querySelector(DOMStrings.budgetLabel).textContent =
@@ -115,8 +121,9 @@ var fnController = (function () {
 
   return {
     deleteItem: function (type, id) {
+      console.log('Deleted');
       var ids = data.items[type].map((el) => el.id);
-      var index = ids.index(id);
+      var index = ids.indexOf(id);
       if (index !== -1) data.items[type].splice(index, 1);
     },
 
@@ -206,6 +213,26 @@ var appController = (function (uiCtrl, fnCtrl) {
         ctrlAddItem();
       }
     });
+    document
+      .querySelector(DOM.containerDiv)
+      .addEventListener('click', function (e) {
+        var idType = e.target.parentNode.parentNode.parentNode.parentNode.id;
+        console.log(idType);
+        if (idType) {
+          var idNType = idType.split('-');
+          var type = idNType[0];
+
+          // Тоон төрөл рүү хөрвүүлэх
+          var id = parseInt(idNType[1]);
+
+          // Санхүүгийн модулиас устгах
+          fnController.deleteItem(type, id);
+
+          // Дэлгэц дээрээс устгах
+          uiController.deleteElement(idType);
+          // Тооцоог шинэчлэх
+        }
+      });
   };
 
   return {
