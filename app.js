@@ -114,6 +114,12 @@ var fnController = (function () {
   };
 
   return {
+    deleteItem: function (type, id) {
+      var ids = data.items[type].map((el) => el.id);
+      var index = ids.index(id);
+      if (index !== -1) data.items[type].splice(index, 1);
+    },
+
     calculateBudget: function () {
       // Нийт орлогуудыг тооцоолно
       calculateTotal('inc');
@@ -216,3 +222,4 @@ var appController = (function (uiCtrl, fnCtrl) {
   };
 })(uiController, fnController);
 appController.init();
+Array.prototype.splice();
