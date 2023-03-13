@@ -11,30 +11,68 @@ var uiController = (function () {
     totalExpLabel: '.budget__expenses--value',
     totalPercentageLabel: '.budget__expenses--percentage',
     containerDiv: '.container',
+    allPercentages: '.item__percentage',
+    date: '.budget__title--month',
+  };
+
+  var nodeListForeach = function (list, callback) {
+    for (var i = 0; i < list.length; i++) {
+      callback(list[i], i);
+    }
+  };
+
+  var formatMoney = function (number) {
+    var x = '' + number;
+    var y = x.split('').reverse().join('');
+    var count = 1;
+    var z = '';
+    for (var i = 0; i < y.length; i++) {
+      z += y[i];
+      if (count % 3 === 0) {
+        z += ',';
+      }
+      count++;
+    }
+    z = z.split('').reverse().join('');
+    if (z[0] === ',') z = z.substr(1, z.length - 1);
+    return z;
   };
 
   return {
+    showDate: function () {
+      var x = new Date().getMonth() + 1;
+      var y = new Date().getDate();
+      var z = `${x} сарын ${y}ны өдөр`;
+      document.querySelector(DOMStrings.date).textContent = z;
+    },
+
+    showPercentages: function (percentages) {
+      var nodeEls = document.querySelectorAll(DOMStrings.allPercentages);
+      nodeListForeach(nodeEls, function (el, i) {
+        el.textContent = percentages[i];
+      });
+    },
+
     deleteElement: function (id) {
       var el = document.getElementById(id);
       el.parentNode.removeChild(el);
     },
 
     showBudget: function (budget) {
-      budget.budget === 0
-        ? (document.querySelector(DOMStrings.budgetLabel).textContent =
-            budget.budget)
+      budget.budget <= 0
+        ? (document.querySelector(DOMStrings.budgetLabel).textContent = 0)
         : (document.querySelector(DOMStrings.budgetLabel).textContent =
-            '+' + budget.budget);
+            '+' + formatMoney(budget.budget));
       budget.totalInc === 0
         ? (document.querySelector(DOMStrings.totalIncLabel).textContent =
             budget.totalInc)
         : (document.querySelector(DOMStrings.totalIncLabel).textContent =
-            '+' + budget.totalInc);
+            '+' + formatMoney(budget.totalInc));
       budget.totalExp === 0
         ? (document.querySelector(DOMStrings.totalExpLabel).textContent =
             budget.totalExp)
         : (document.querySelector(DOMStrings.totalExpLabel).textContent =
-            '-' + budget.totalExp);
+            '-' + formatMoney(budget.totalExp));
       budget.percentage === 0
         ? (document.querySelector(DOMStrings.totalPercentageLabel).textContent =
             budget.percentage)
@@ -63,7 +101,7 @@ var uiController = (function () {
       }
       html = html.replace('%%1%%', item.id);
       html = html.replace('%%desc%%', item.desc);
-      html = html.replace('%%val%%', item.val);
+      html = html.replace('%%val%%', formatMoney(item.val));
 
       // Tохирох хэсэгт гаргана
       document.querySelector(listDom).insertAdjacentHTML('beforeend', html);
@@ -97,6 +135,14 @@ var fnController = (function () {
     this.id = id;
     this.desc = desc;
     this.val = parseInt(val);
+    this.percentage = -1;
+  };
+  Expense.prototype.calcPercentage = function (totalInc) {
+    if (totalInc === 0) this.percentage = 0;
+    else this.percentage = Math.round((this.val / totalInc) * 100);
+  };
+  Expense.prototype.getPercentage = function () {
+    return this.percentage;
   };
 
   var data = {
@@ -120,6 +166,15 @@ var fnController = (function () {
   };
 
   return {
+    calcPercentages: function () {
+      data.items.exp.forEach((el) => el.calcPercentage(data.total.inc));
+    },
+
+    getPercentages: function () {
+      var allPercentages = data.items.exp.map((el) => el.getPercentage());
+      return allPercentages;
+    },
+
     deleteItem: function (type, id) {
       console.log('Deleted');
       var ids = data.items[type].map((el) => el.id);
@@ -138,7 +193,10 @@ var fnController = (function () {
       data.budget = data.total.inc - data.total.exp;
 
       // Нийт зарлагын эзлэх хувийг олно
-      data.percentage = Math.round((data.total.exp / data.total.inc) * 100);
+      if (data.total.inc === 0) {
+        data.percentage = 0;
+      } else
+        data.percentage = Math.round((data.total.exp / data.total.inc) * 100);
     },
 
     getBudget: function () {
@@ -171,6 +229,25 @@ var fnController = (function () {
 })();
 
 var appController = (function (uiCtrl, fnCtrl) {
+  var updateBudget = function () {
+    // 4. Төсвийг тооцоолно
+    fnController.calculateBudget();
+
+    // 5. Эцсийн үлдэгдлийг тооцоолно
+    var budget = fnController.getBudget();
+
+    // 6. Дэлгэцэнд үзүүлнэ
+    uiController.showBudget(budget);
+
+    // 7. Элементүүдийн хувийг тооцоолно
+    fnController.calcPercentages();
+
+    // 8. Хувийг хүлээж авна
+    var allPercentages = fnController.getPercentages();
+
+    // 9. Эдгээр хувийг дэлгэцэнд гаргана
+    uiController.showPercentages(allPercentages);
+  };
   var ctrlAddItem = function () {
     // 1. Дэлгэцнээс утгуудыг авна
     var input = uiCtrl.getInput();
@@ -186,15 +263,7 @@ var appController = (function (uiCtrl, fnCtrl) {
       // 3. Дэлгэцэнд тохирох хэсэгт гаргана
       uiController.addListItem(item, input.type);
       uiController.clearField();
-
-      // 4. Төсвийг тооцоолно
-      fnController.calculateBudget();
-
-      // 5. Эцсийн үлдэгдлийг тооцоолно
-      var budget = fnController.getBudget();
-
-      // 6. Дэлгэцэнд үзүүлнэ
-      uiController.showBudget(budget);
+      updateBudget();
     }
   };
 
@@ -231,6 +300,7 @@ var appController = (function (uiCtrl, fnCtrl) {
           // Дэлгэц дээрээс устгах
           uiController.deleteElement(idType);
           // Тооцоог шинэчлэх
+          updateBudget();
         }
       });
   };
@@ -238,6 +308,7 @@ var appController = (function (uiCtrl, fnCtrl) {
   return {
     init: function () {
       console.log('Started');
+      uiController.showDate();
       uiController.showBudget({
         budget: 0,
         totalInc: 0,
