@@ -39,6 +39,20 @@ var uiController = (function () {
   };
 
   return {
+    changeType: function () {
+      var elements = document.querySelectorAll(
+        DOMStrings.inputType +
+          ', ' +
+          DOMStrings.inputDescription +
+          ', ' +
+          DOMStrings.inputValue
+      );
+      nodeListForeach(elements, function (el) {
+        el.classList.toggle('red-focus');
+      });
+      document.querySelector(DOMStrings.addButton).classList.toggle('red');
+    },
+
     showDate: function () {
       var x = new Date().getMonth() + 1;
       var y = new Date().getDate();
@@ -303,6 +317,9 @@ var appController = (function (uiCtrl, fnCtrl) {
           updateBudget();
         }
       });
+    document
+      .querySelector(DOM.inputType)
+      .addEventListener('change', uiController.changeType);
   };
 
   return {
